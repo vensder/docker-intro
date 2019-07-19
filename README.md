@@ -114,48 +114,117 @@ sudo usermod -aG docker $(whoami)
 It's time to run your first container:
 
 ```bash
-docker run ubuntu /bin/echo 'Hello world'
+docker run alpine echo 'Hello from my tiny container!'
 ```
 
 Console output:
 
 ```
-Unable to find image 'ubuntu:latest' locally
-latest: Pulling from library/ubuntu
-6b98dfc16071: Pull complete
-4001a1209541: Pull complete
-6319fc68c576: Pull complete
-b24603670dc3: Pull complete
-97f170c87c6f: Pull complete
-Digest: sha256:5f4bdc3467537cbbe563e80db2c3ec95d548a9145d64453b06939c4592d67b6d
-Status: Downloaded newer image for ubuntu:latest
-Hello world
+Unable to find image 'alpine:latest' locally
+latest: Pulling from library/alpine
+050382585609: Pull complete 
+Digest: sha256:6a92cd1fcdc8d8cdec60f33dda4db2cb1fcdcacf3410a8e05b3741f44a9b5998
+Status: Downloaded newer image for alpine:latest
+Hello from my tiny container!
+
 ```
 
 * **docker run** is a command to run a container.
-* **ubuntu** is the image you run. For example, the Ubuntu operating system image. When you specify an image, Docker looks first for the image on your Docker host. If the image does not exist locally, then the image is pulled from the public image registry -- Docker Hub.
-* **/bin/echo 'Hello world'** is the command that will run inside a new container. This container simply prints “Hello world” and stops the execution.
+* **alpine** is the image you run. For example, the alpine operating system image. When you specify an image, Docker looks first for the image on your Docker host. If the image does not exist locally, then the image is pulled from the public image registry -- Docker Hub.
+* **echo 'Hello from my tiny container!'** is the command that will run inside a new container. This container simply prints 'Hello from my tiny container!' and stops the execution.
 
 Let's try to create an interactive shell inside a Docker container:
 
 ```bash
-docker run -i -t --rm ubuntu /bin/bash
+docker run -i -t --rm alpine sh
 ```
 
 * **-t** flag assigns a pseudo-tty or terminal inside the new container.
 * **-i** flag allows you to make an interactive connection by grabbing the standard input (STDIN) of the container.
 * **--rm** flag automatically removes the container when the process exits. By default, containers are not deleted. This container exists until we keep the shell session and terminates when we exit the session (like an SSH session with a remote server).
 
+You can play with command line inside container:
+
+```bash
+ps aux
+```
+
+Console output:
+
+```
+PID   USER     TIME  COMMAND
+    1 root      0:00 sh
+    6 root      0:00 ps aux
+```
+
+```bash
+du -d 1 -h
+```
+
+Console output:
+
+```
+4.0K	./home
+16.0K	./media
+4.0K	./mnt
+3.7M	./lib
+8.0K	./root
+572.0K	./etc
+0	./proc
+4.0K	./opt
+820.0K	./bin
+496.0K	./usr
+68.0K	./var
+4.0K	./run
+0	./dev
+232.0K	./sbin
+4.0K	./srv
+0	./sys
+4.0K	./tmp
+5.9M	.
+```
+
+```bash
+cat /etc/*release
+```
+
+Console output:
+
+```
+3.10.1
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.10.1
+PRETTY_NAME="Alpine Linux v3.10"
+HOME_URL="https://alpinelinux.org/"
+BUG_REPORT_URL="https://bugs.alpinelinux.org/"
+```
+
 If you want to keep the container running after the end of the session, you need to daemonize it:
 
 ```bash
-docker run --name daemon -d ubuntu /bin/sh -c "while true; do echo hello world; sleep 1; done"
+docker run --name daemon -d alpine /bin/sh -c "while true; do echo Hello from docker container\!; sleep 1; done"
 ```
 
 * **--name daemon** assigns daemon name to a new container. If you don't specify a name explicitly, Docker will generate and assign it automatically.
 * **-d** flag runs the container in the background (i.e., daemonizes it).
 
-Let's see what containers we have at the moment:
+Let's see what running containers we have at the moment:
+
+```bash
+docker ps
+```
+
+Console output:
+
+```
+CONTAINER ID  IMAGE   COMMAND                 CREATED             STATUS                         PORTS  NAMES
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+1dbeeb615947        alpine              "/bin/sh -c 'while t…"   57 seconds ago      Up 56 seconds                           daemon
+```
+
+
+All containers (include stopped):
 
 ```bash
 docker ps -a
@@ -164,17 +233,18 @@ docker ps -a
 Console output:
 
 ```
-CONTAINER ID  IMAGE   COMMAND                 CREATED             STATUS                         PORTS  NAMES
-1fc8cee64ec2  ubuntu  "/bin/sh -c 'while..."  32 seconds ago      Up 30 seconds                         daemon
-c006f1a02edf  ubuntu  "/bin/echo 'Hello ..."  About a minute ago  Exited (0) About a minute ago         gifted_nobel
+CONTAINER ID        IMAGE                           COMMAND                  CREATED              STATUS                      PORTS               NAMES
+1dbeeb615947        alpine                          "/bin/sh -c 'while t…"   About a minute ago   Up About a minute                               daemon
+678147dda7ea        alpine                          "echo 'Hello from my…"   13 minutes ago       Exited (0) 13 minutes ago                       recursing_elion
 ```
+
 
 * **docker ps** is a command to list containers.
 * **-a** shows all containers (without -a flag ps will show only running containers).
 
 The **ps** shows us that we have two containers:
 
-* **gifted_nobel** (the name for this container was generated automatically – it will be different on your machine). It's the first container we created, the one that printed 'Hello world' once.
+* **recursing_elion** (the name for this container was generated automatically – it will be different on your machine). It's the first container we created, the one that printed 'Hello from container' once.
 * **daemon** -- the third container we created, which runs as a daemon.
 
 Note: there is no second container (the one with interactive shell) because we set the **--rm option**. As a result, this container is automatically deleted right after execution.
@@ -188,10 +258,14 @@ docker logs -f daemon
 Console output:
 
 ```
-...
-hello world
-hello world
-hello world
+Hello from docker container!
+Hello from docker container!
+Hello from docker container!
+Hello from docker container!
+Hello from docker container!
+Hello from docker container!
+Hello from docker container!
+
 ```
 
 * **docker logs** fetch the logs of a container.
@@ -212,9 +286,9 @@ docker ps -a
 Console output:
 
 ```
-CONTAINER ID  IMAGE   COMMAND                 CREATED        STATUS                      PORTS  NAMES
-1fc8cee64ec2  ubuntu  "/bin/sh -c 'while..."  5 minutes ago  Exited (137) 5 seconds ago         daemon
-c006f1a02edf  ubuntu  "/bin/echo 'Hello ..."  6 minutes ago  Exited (0) 6 minutes ago           gifted_nobel
+CONTAINER ID        IMAGE                           COMMAND                  CREATED              STATUS                       PORTS               NAMES
+c6c2f82e6237        alpine                          "/bin/sh -c 'while t…"   About a minute ago   Exited (137) 5 seconds ago                       daemon
+678147dda7ea        alpine                          "echo 'Hello from my…"   17 minutes ago       Exited (0) 17 minutes ago                        recursing_elion
 ```
 
 The container is stopped. We can start it again:
@@ -226,15 +300,15 @@ docker start daemon
 Let's ensure that it's running:
 
 ```bash
-docker ps -a 
+docker ps
 ```
 
 Console output:
 
 ```
-CONTAINER ID  IMAGE   COMMAND                 CREATED        STATUS                    PORTS  NAMES
-1fc8cee64ec2  ubuntu  "/bin/sh -c 'while..."  5 minutes ago  Up 3 seconds                     daemon
-c006f1a02edf  ubuntu  "/bin/echo 'Hello ..."  6 minutes ago  Exited (0) 7 minutes ago         gifted_nobel
+CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS              PORTS               NAMES
+c6c2f82e6237        alpine              "/bin/sh -c 'while t…"   About a minute ago   Up 8 seconds                            daemon
+
 ```
 
 Now, stop it again and remove all the containers manually:
@@ -254,6 +328,10 @@ docker rm -f $(docker ps -aq)
 * **docker rm** is the command to remove the container.
 * **-f** flag (for rm) stops the container if it's running (i.e., force deletion).
 * **-q** flag (for ps) is to print only container IDs.
+
+
+
+
 
 ## Best practices for creating images
 
