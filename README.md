@@ -109,7 +109,7 @@ sudo usermod -aG docker $(whoami)
 * [**Docker hub**](https://hub.docker.com/explore/) -- a registry with web interface provided by Docker Inc. It stores a lot of Docker images with different software. Docker Hub is a source of the "official" Docker images made by the Docker team or in cooperation with the original software manufacturer (it doesn't necessary mean that these "original" images are from official software manufacturers). Official images list their potential vulnerabilities. This information is available to any logged-in user. There are both free and paid accounts available. You can have one private image per account and an infinite amount of public images for free. [**Docker Store**](https://store.docker.com/search?type=image&source=verified) -- a service very similar to Docker Hub. It's a marketplace with ratings, reviews, etc. My personal opinion is that it's marketing stuff. I'm totally happy with Docker Hub.
 
 
-## Example 1: hello world
+## Example 1: Hello world
 
 It's time to run your first container:
 
@@ -311,11 +311,10 @@ c6c2f82e6237        alpine              "/bin/sh -c 'while t…"   About a minut
 
 ```
 
-Now, stop it again and remove all the containers manually:
+Now, stop it again and remove the container manually:
 
 ```
 docker stop daemon
-docker rm <your first container name>
 docker rm daemon
 ```
 
@@ -328,6 +327,11 @@ docker rm -f $(docker ps -aq)
 * **docker rm** is the command to remove the container.
 * **-f** flag (for rm) stops the container if it's running (i.e., force deletion).
 * **-q** flag (for ps) is to print only container IDs.
+
+
+## Example 2: Nginx
+
+
 
 
 
