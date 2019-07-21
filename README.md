@@ -491,7 +491,7 @@ docker logs -f <container_name>
 
 ```
 
-Forvard access and error logs to stdout and stderr inside the docker to use standard logging features of the docker:
+Forward access and error logs to stdout and stderr inside the docker to use standard logging features of the docker:
 
 ```Dockerfile
 # forward request and error logs to docker log collector
@@ -499,7 +499,7 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
     && ln -sf /dev/stderr /var/log/nginx/error.log
 ```
 
-And rebuild the image.
+And rebuild the image.  
 
 ## Best practices for creating images
 
