@@ -17,16 +17,6 @@
 ## What is Docker?
 
 [Docker](https://www.docker.com/) is an open-source tool that automates the deployment of an application inside a software container. 
-The easiest way to grasp the idea behind Docker is to compare it to, well... standard shipping containers.
-
-Back in the day, transportation companies faced the following challenges:
-
-* How to transport different (incompatible) types of goods side by side (like food and chemicals, or glass and bricks).
-* How to handle packages of various sizes using the same vehicle.
-
-After the introduction of containers, bricks could be put over glass, and chemicals could be stored next to food. Cargo of various sizes can be put inside a standardized container and loaded/unloaded by the same vehicle.
-
-Let's go back to **containers in software development**.
 
 When you develop an application, you need to provide your code along with all possible dependencies like libraries, the web server, databases, etc. You may end up in a situation when the application is working on your computer, but won't even start on the staging server, or the dev or QA's machine.
 
@@ -329,11 +319,161 @@ docker rm -f $(docker ps -aq)
 * **-q** flag (for ps) is to print only container IDs.
 
 
-## Example 2: Nginx
+## Example 2: Ubuntu-based Nginx web-server 
+
+Download ubuntu docker image (by default pull uses latest tag of the image of the latest version of the OS)
+
+```bash
+docker pull ubuntu
+Using default tag: latest
+latest: Pulling from library/ubuntu
+Digest: sha256:9b1702dcfe32c873a770a32cfd306dd7fc1c4fd134adfb783db68defc8894b3c
+Status: Image is up to date for ubuntu:latest
+```
+
+Run container in interactive mode and go inside:
+
+```
+docker run -ti ubuntu bash
+root@2c8c9023d3cd:/# 
+```
+
+```bash
+hostname
+2c8c9023d3cd
+
+whoami
+#...
+cat /etc/*release
+#...
+ps aux
+### etc
+```
+
+Let's try to install nginx inside the container:
+
+```bash
+root@2c8c9023d3cd:/# apt-get install nginx
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+E: Unable to locate package nginx
+
+apt-get update
+# ...
+apt-get install nginx
+# ...
+nginx -t
+# ...
+dpkg -l | grep nginx
+# ...
+cat /etc/nginx/nginx.conf
+# ...
+exit
+```
+
+On the host machine:
+
+```bash
+docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                     PORTS               NAMES
+2c8c9023d3cd        ubuntu              "bash"                   10 minutes ago      Exited (0) 4 seconds ago                       pedantic_gagarin
+
+
+docker start 2c8c9023d3cd
+2c8c9023d3cd
+dmitrii@dmitrii-HP-EliteBook-850-G5:~/git/docker-intro$ docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+2c8c9023d3cd        ubuntu              "bash"              11 minutes ago      Up 2 seconds                            pedantic_gagarin
+
+
+docker exec -ti 2c8c9023d3cd bash
+
+
+root@2c8c9023d3cd:/# 
+
+ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.5  0.0  18508  3172 pts/0    Ss+  05:30   0:00 bash
+root        11  2.0  0.0  18508  3364 pts/1    Ss   05:31   0:00 bash
+root        20  0.0  0.0  34400  2772 pts/1    R+   05:31   0:00 ps aux
+
+
+nginx
+#...
+ps aux
+# ...
+apt install curl
+# ...
+curl localhost
+# ...
+ss -a -l -t
+State                 Recv-Q                 Send-Q                                   Local Address:Port                                   Peer Address:Port                 
+LISTEN                0                      128                                            0.0.0.0:80                                          0.0.0.0:*                    
+LISTEN                0                      128                                               [::]:80                                             [::]:*                    
 
 
 
+echo "daemon off;" >> /etc/nginx/nginx.conf
+exit
+```
 
+
+```bash
+docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+b7ca8d464dcf        ubuntu              "bash"              15 minutes ago      Up 6 minutes                            vigilant_gauss
+
+docker stop vigilant_gauss 
+
+docker commit vigilant_gauss myubuntu
+sha256:88b424844041fbd2964fe71f298409c71ab3c2a64431f92189f1e3b28a91d99e
+dmitrii@dmitrii-HP-EliteBook-850-G5:~$ docker images
+REPOSITORY                   TAG                 IMAGE ID            CREATED             SIZE
+myubuntu                     latest              88b424844041        3 seconds ago       160MB
+
+docker run -d --entrypoint=nginx myubuntu
+9c6cab6961cb7262add38c633d47f0a89ed6e246fe42438f1a5fdf2cf80c79ec
+dmitrii@dmitrii-HP-EliteBook-850-G5:~$ docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+9c6cab6961cb        myubuntu            "nginx"             3 seconds ago       Up 1 second                             vigilant_hamilton
+
+
+docker exec vigilant_hamilton ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  1.9  0.0 141104 11008 ?        Ss   06:11   0:00 nginx: master process nginx
+www-data     6  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+www-data     7  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+www-data     8  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+www-data     9  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+www-data    10  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+www-data    11  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+www-data    12  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+www-data    13  0.0  0.0 141480  3496 ?        S    06:11   0:00 nginx: worker process
+root        14 22.0  0.0  34400  2768 ?        Rs   06:11   0:00 ps aux
+
+
+docker stop vigilant_hamilton
+
+docker run -d -p 80:80 --entrypoint=nginx myubuntu
+
+docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                NAMES
+8bc3807d3aef        myubuntu            "nginx"             3 seconds ago       Up 1 second         0.0.0.0:80->80/tcp   romantic_colden
+
+curl localhost
+
+docker exec -ti romantic_colden bash
+
+ls -la /var/www/html
+
+cat /var/www/html/index.nginx-debian.html 
+
+sed -i 's/Welcome to nginx/Hello from Docker container/g' /var/www/html/index.nginx-debian.html 
+
+```
+
+Open in browser http://localhost
 
 
 
